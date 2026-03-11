@@ -33,6 +33,9 @@ const attackLogger = async (req, res, next) => {
         userAgent: req.headers['user-agent'],
         method: req.method,
         endpoint: req.path,
+        // This middleware logs *all* requests (not only detected attacks).
+        // The schema requires `attackType`, so default to UNKNOWN for benign traffic.
+        attackType: 'UNKNOWN',
         headers: Object.fromEntries(
           Object.entries(req.headers).filter(([key]) => 
             !key.toLowerCase().includes('authorization') && 

@@ -4,6 +4,19 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
+// Only these coupon codes are considered valid.
+// Any other code should be rejected as invalid.
+// Keep this list in sync with what you promote on the frontend (e.g. Coupons page).
+const ALLOWED_COUPONS = new Set([
+  'GLOW10',
+  'WELCOME10',
+  'SAVE20',
+  'FREESHIP',
+  'GLOW10',
+  'GLOW15',
+  'GLOW20'
+]);
+
 // Initialize some fake coupons
 const initializeCoupons = async () => {
   try {
@@ -12,7 +25,9 @@ const initializeCoupons = async () => {
       await Coupon.create([
         { code: 'WELCOME10', discount: 10, discountType: 'percentage', minPurchase: 50 },
         { code: 'SAVE20', discount: 20, discountType: 'percentage', minPurchase: 100 },
-        { code: 'FREESHIP', discount: 5, discountType: 'fixed', minPurchase: 25 }
+        { code: 'FREESHIP', discount: 5, discountType: 'fixed', minPurchase: 25 },
+        // Optional: keep a record for GLOW10 as well so it can be listed from DB
+        { code: 'GLOW10', discount: 10, discountType: 'percentage', minPurchase: 50 }
       ]);
     }
   } catch (error) {
@@ -22,7 +37,7 @@ const initializeCoupons = async () => {
 
 initializeCoupons();
 
-// Apply coupon - VULNERABLE to abuse
+// Apply coupon - now restricted to a fixed allowlist
 router.get('/apply', async (req, res) => {
   try {
     const { code, amount } = req.query;
@@ -31,10 +46,19 @@ router.get('/apply', async (req, res) => {
       return res.status(400).json({ error: 'Coupon code required' });
     }
     
+    // Normalize to uppercase for comparison
+    const normalizedCode = String(code).toUpperCase();
+
+    // Reject any coupon that is not in our allowlist
+    if (!ALLOWED_COUPONS.has(normalizedCode)) {
+      logger.info(`Invalid / disallowed coupon attempt: ${code}`);
+      return res.status(404).json({ error: 'Invalid coupon code' });
+    }
+    
     // VULNERABILITY: No rate limiting, allows brute force attempts
     // VULNERABILITY: Case-insensitive search allows easy enumeration
     const coupon = await Coupon.findOne({ 
-      code: { $regex: new RegExp(`^${code}$`, 'i') },
+      code: { $regex: new RegExp(`^${normalizedCode}$`, 'i') },
       isActive: true
     });
     
@@ -84,9 +108,17 @@ router.get('/apply', async (req, res) => {
 // List all coupons (vulnerability: information disclosure)
 router.get('/list', async (req, res) => {
   try {
-    // VULNERABILITY: Exposes all coupon codes
+    // Only return coupons that are in our allowed list, so random DB coupons
+    // or test data are not treated as valid by clients.
     const coupons = await Coupon.find({ isActive: true });
-    res.json({ coupons: coupons.map(c => ({ code: c.code, discount: c.discount })) });
+    const filtered = coupons.filter(c => ALLOWED_COUPONS.has(String(c.code).toUpperCase()));
+
+    res.json({
+      coupons: filtered.map(c => ({
+        code: c.code,
+        discount: c.discount
+      }))
+    });
   } catch (error) {
     logger.error('Coupon list error:', error);
     res.status(500).json({ error: 'Failed to list coupons' });

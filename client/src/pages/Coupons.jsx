@@ -9,9 +9,6 @@ function Coupons() {
   const [error, setError] = useState('')
   const [toast, setToast] = useState(null)
 
-  // Check if a coupon is already applied
-  const appliedCoupon = JSON.parse(localStorage.getItem('appliedCoupon') || 'null')
-
   const showToast = (msg, type) => {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 2500)
@@ -42,26 +39,6 @@ function Coupons() {
     }
   }
 
-  const removeCoupon = () => {
-    localStorage.removeItem('appliedCoupon')
-    setCode('')
-    setResult(null)
-    showToast('Coupon removed', 'error')
-    // force re-render
-    window.location.reload()
-  }
-
-  const listCoupons = async () => {
-    try {
-      // VULN #2 — INFORMATION DISCLOSURE
-      const response = await api.get('/api/coupons/list')
-      setResult(response.data)
-      setError('')
-    } catch (err) {
-      setError('Failed to list coupons')
-    }
-  }
-
   return (
     <div className="coupons-page">
       <div className="container">
@@ -70,18 +47,6 @@ function Coupons() {
           <h1>Coupons & Discounts</h1>
           <p>Apply a discount code to your order</p>
         </div>
-
-        {/* ── ALREADY APPLIED BANNER ── */}
-        {appliedCoupon && (
-          <div className="coupon-applied-banner">
-            <div>
-              <span className="coupon-applied-label">Active Coupon</span>
-              <span className="coupon-applied-code">{appliedCoupon.code}</span>
-              <span className="coupon-applied-discount">— {appliedCoupon.discount}% off applied to your cart</span>
-            </div>
-            <button onClick={removeCoupon} className="coupon-remove-btn">Remove</button>
-          </div>
-        )}
 
         <div className="coupons-layout">
 
@@ -111,18 +76,9 @@ function Coupons() {
 
             <div>
               <button onClick={applyCoupon} className="btn-apply">Apply Coupon</button>
-              <button onClick={listCoupons} className="btn-list">List All Coupons</button>
             </div>
 
             {error && <div className="coupon-error">{error}</div>}
-
-            {/* VULN #2 continued — raw JSON exposes all coupon data */}
-            {result && (
-              <div className="coupon-result">
-                <h3>Response</h3>
-                <pre>{JSON.stringify(result, null, 2)}</pre>
-              </div>
-            )}
           </div>
 
           {/* ── INFO PANEL ── */}
@@ -152,12 +108,14 @@ function Coupons() {
         </div>
       </div>
 
-      {/* ── TOAST ── */}
+      {/* ── TOAST (Matches cart toast style) ── */}
       {toast && (
-        <div className={`coupon-toast ${toast.type === 'error' ? 'coupon-toast--error' : ''}`}>
+        <div className={`cart-toast ${toast.type === 'error' ? 'cart-toast--updated' : ''}`}>
           <span className="cart-toast-icon">{toast.type === 'error' ? '✕' : '✓'}</span>
           <div>
-            <p className="cart-toast-title">{toast.type === 'error' ? 'Oops' : 'Coupon Applied'}</p>
+            <p className="cart-toast-title">
+              {toast.type === 'error' ? 'Coupon Error' : 'Coupon Applied'}
+            </p>
             <p className="cart-toast-sub">{toast.msg}</p>
           </div>
         </div>

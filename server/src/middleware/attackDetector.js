@@ -90,7 +90,7 @@ const detectAttack = (req) => {
   }
   
   // Privilege escalation - accessing admin routes without admin role
-  if (req.path.startsWith('/api/admin') && !req.user?.role === 'admin') {
+  if (req.path.startsWith('/api/admin') && req.user?.role !== 'admin') {
     attacks.push({
       type: 'PRIVILEGE_ESCALATION',
       severity: 'CRITICAL',
