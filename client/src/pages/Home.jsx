@@ -1,8 +1,43 @@
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import './Home.css'
 
+const slides = [
+  {
+    image: '/images/beautyBanner.jpg',
+    eyebrow: 'HoneyGlow Beauty',
+    heading: 'Get',
+    highlight: 'Glowing',
+    subheading: 'This Season',
+    sub: 'Indulge in luxurious skincare crafted for every complexion. Pamper your skin with the care it deserves.',
+    discount: '10%',
+    code: 'GLOW10',
+  },
+  {
+    image: '/images/BeautyBanner2.jpg',
+    eyebrow: 'New Arrivals',
+    heading: 'Feel',
+    highlight: 'Radiant',
+    subheading: 'Every Day',
+    sub: 'Explore our newest collection of premium beauty products curated just for you.',
+    discount: '15%',
+    code: 'GLOW15',
+  },
+  {
+    image: '/images/BeautyBanner3.jpg',
+    eyebrow: 'Limited Offer',
+    heading: 'Luxury',
+    highlight: 'Skincare',
+    subheading: 'For Less',
+    sub: 'For a limited time, enjoy exclusive deals on our most-loved skincare essentials.',
+    discount: '20%',
+    code: 'GLOW20',
+  },
+]
+
 function Home() {
-  const navigate = useNavigate()
+  const [current, setCurrent] = useState(0)
+  const [toast, setToast] = useState(null)
+  const [fading, setFading] = useState(false)
 
   const products = [
     { id: 1, name: 'Glowing Serum', price: 49.99, image: '/images/Serum.jpg', tag: 'Bestseller' },
@@ -12,43 +47,77 @@ function Home() {
     { id: 5, name: 'Anti-Aging Cream', price: 79.99, image: '/images/Anti Cream.jpg', tag: 'Premium' },
   ]
 
-  const addToCart = (product) => {
-    // Read existing cart from localStorage
-    const existing = JSON.parse(localStorage.getItem('cart') || '[]')
+  // Auto advance every 5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      goTo((current + 1) % slides.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [current])
 
-    // If product already in cart, just increase quantity
+  const goTo = (index) => {
+    setFading(true)
+    setTimeout(() => {
+      setCurrent(index)
+      setFading(false)
+    }, 400)
+  }
+
+  const showToast = (name, type) => {
+    setToast({ name, type })
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  const addToCart = (product) => {
+    const existing = JSON.parse(localStorage.getItem('cart') || '[]')
     const found = existing.find(item => item.id === product.id)
     if (found) {
       found.quantity += 1
+      showToast(product.name, 'updated')
     } else {
       existing.push({ ...product, quantity: 1 })
+      showToast(product.name, 'added')
     }
-
     localStorage.setItem('cart', JSON.stringify(existing))
-  
   }
+
+  const slide = slides[current]
 
   return (
     <div className="home">
 
-      {/* ── HERO BANNER ── */}
-      <div className="hero">
+      {/* ── HERO CAROUSEL ── */}
+      <div className="hero" style={{ backgroundImage: `url('${slide.image}')` }}>
         <div className="hero-bg" />
 
-        <div className="hero-content">
-          <p className="hero-eyebrow">HoneyGlow Beauty</p>
-          <h1>Get <span>Glowing</span><br />This Season</h1>
-          <p>Indulge in luxurious skincare crafted for every complexion. Pamper your skin with the care it deserves.</p>
+        <div className={`hero-content ${fading ? 'hero-content--fading' : ''}`}>
+          <p className="hero-eyebrow">{slide.eyebrow}</p>
+          <h1>
+            {slide.heading} <span>{slide.highlight}</span><br />{slide.subheading}
+          </h1>
+          <p>{slide.sub}</p>
           <button className="btn-hero">Shop Collection</button>
         </div>
 
-        <div className="hero-badge">
+        {/* Discount badge changes with each slide */}
+        <div className={`hero-badge ${fading ? 'hero-content--fading' : ''}`}>
           <p className="discount-label">Flat</p>
-          <div className="discount">10%</div>
+          <div className="discount">{slide.discount}</div>
           <p style={{ fontSize: '11px', letterSpacing: '1px', marginTop: '8px', color: 'rgba(250,245,239,0.6)' }}>
             Use Code
           </p>
-          <span className="code-tag">GLOW10</span>
+          <span className="code-tag">{slide.code}</span>
+        </div>
+
+        {/* ── DOTS ONLY — no arrows ── */}
+        <div className="carousel-dots">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              className={`carousel-dot ${i === current ? 'carousel-dot--active' : ''}`}
+              onClick={() => goTo(i)}
+            />
+          ))}
         </div>
       </div>
 
@@ -79,6 +148,19 @@ function Home() {
           </div>
         </div>
       </div>
+
+      {/* ── TOAST NOTIFICATION ── */}
+      {toast && (
+        <div className={`cart-toast ${toast.type === 'updated' ? 'cart-toast--updated' : ''}`}>
+          <span className="cart-toast-icon">{toast.type === 'updated' ? '↑' : '✓'}</span>
+          <div>
+            <p className="cart-toast-title">
+              {toast.type === 'updated' ? 'Already in Cart! Qty Updated' : 'Added to Cart'}
+            </p>
+            <p className="cart-toast-sub">{toast.name}</p>
+          </div>
+        </div>
+      )}
 
     </div>
   )
