@@ -27,12 +27,14 @@ const attackLogger = async (req, res, next) => {
     try {
       const ip = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
       const geo = geoip.lookup(ip);
+      const classification = req.attackClassification || null;
       
       const logData = {
         ip,
         userAgent: req.headers['user-agent'],
         method: req.method,
         endpoint: req.path,
+        attackType: classification?.type || 'UNKNOWN',
         headers: Object.fromEntries(
           Object.entries(req.headers).filter(([key]) => 
             !key.toLowerCase().includes('authorization') && 
@@ -41,6 +43,8 @@ const attackLogger = async (req, res, next) => {
         ),
         requestBody: req.body,
         queryParams: req.query,
+        payload: classification?.payload,
+        severity: classification?.severity,
         responseStatus: res.statusCode,
         geoip: geo ? {
           country: geo.country,
