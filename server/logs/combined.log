@@ -3357,3 +3357,5 @@
 {"level":"info","message":"Connected to MongoDB","service":"honeyglow-backend","timestamp":"2026-04-23 16:03:25"}
 {"level":"info","message":"HoneyGlow Trap Backend running on port 3001","service":"honeyglow-backend","timestamp":"2026-04-23 16:03:25"}
 {"level":"warn","matchedTypes":["SQL_INJECTION"],"message":"Attack detected: SQL_INJECTION from ::ffff:172.19.0.6","payload":"' OR 1=1","service":"honeyglow-backend","severity":"HIGH","timestamp":"2026-04-23 16:03:27","type":"SQL_INJECTION"}
+{"level":"info","message":"Connected to MongoDB","service":"honeyglow-backend","timestamp":"2026-04-23 16:21:01"}
+{"level":"info","message":"HoneyGlow Trap Backend running on port 3001","service":"honeyglow-backend","timestamp":"2026-04-23 16:21:01"}
