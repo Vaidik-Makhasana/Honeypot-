@@ -196,3 +196,22 @@ Never expose to production or public networks without proper isolation.
 ## 📝 License
 
 MIT License - For educational and research purposes only.
+
+## AI Threat Intelligence Pipeline
+
+A local Ollama + LlamaIndex pipeline is available in `threat-intel/`.
+
+It performs:
+- Log normalization across Zeek, app logs, and session data
+- Attack classification
+- Intent inference
+- MITRE ATT&CK mapping
+- Threat intelligence report generation
+
+Quick start:
+
+```bash
+cd threat-intel
+pip install -r requirements.txt
+python run_pipeline.py
+```
