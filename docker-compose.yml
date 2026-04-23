@@ -72,6 +72,24 @@ services:
     networks:
       - honeyglow-network
 
+  admin-panel:
+    build:
+      context: ./admin-panel
+      dockerfile: Dockerfile
+    container_name: honeyglow-admin-panel
+    restart: unless-stopped
+    ports:
+      - "5175:5175"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - backend
+    volumes:
+      - ./admin-panel:/app
+      - /app/node_modules
+    networks:
+      - honeyglow-network
+
   nginx:
     image: nginx:alpine
     container_name: honeyglow-nginx
